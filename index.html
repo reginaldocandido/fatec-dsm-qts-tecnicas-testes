@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Interativo de Técnicas de Teste</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A dashboard-style SPA with top-level navigation for "Caixa Branca" and "Caixa Preta". Within each category, users can select specific techniques (e.g., Cobertura, Valores Limites). Clicking a technique updates a central content area with its definition, a real-world example, and a dedicated interactive "playground" to demonstrate the concept. This structure transforms passive reading into active, hands-on learning, directly addressing the goal of making the concepts more understandable and applicable for students. -->
+    <!-- Visualization & Content Choices: The application uses interactive components built with HTML/CSS/JS to simulate each testing technique. For 'Cobertura', a bar chart from Chart.js visualizes the coverage percentage. For 'Valores Limites', an interactive form with a visual number line gives immediate feedback. For 'Caminhos' and 'Condições', pseudocode is highlighted dynamically based on user input. For 'Cenários' and 'Casos de Uso', accordions structure the information clearly. This approach was chosen to make abstract concepts tangible and engaging without using SVG or Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFDFB;
+            color: #333;
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+            border-bottom: 4px solid transparent;
+        }
+        .nav-btn.active {
+            border-bottom-color: #A5694B;
+            color: #A5694B;
+            font-weight: 700;
+        }
+        .tech-btn {
+            transition: all 0.3s ease;
+            border-color: #E0DCD3;
+            background-color: #FFFFFF;
+        }
+        .tech-btn:hover {
+            border-color: #A5694B;
+            background-color: #F9F7F4;
+        }
+        .tech-btn.active {
+            border-color: #A5694B;
+            background-color: #A5694B;
+            color: #FFFFFF;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .code-block {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .highlight {
+            background-color: rgba(250, 204, 21, 0.4);
+            transition: background-color 0.3s;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#3D2C24]">Guia Interativo de Técnicas de Teste</h1>
+            <p class="text-lg text-gray-600 mt-2">Uma abordagem prática para aprender e aplicar os conceitos de teste de software.</p>
+        </header>
+
+        <nav class="flex justify-center border-b-2 border-gray-200 mb-8">
+            <button id="nav-caixa-branca" class="nav-btn text-xl p-4 active" onclick="showCategory('caixa-branca')">Caixa Branca</button>
+            <button id="nav-caixa-preta" class="nav-btn text-xl p-4" onclick="showCategory('caixa-preta')">Caixa Preta</button>
+        </nav>
+
+        <main id="main-content">
+            <!-- CAIXA BRANCA SECTION -->
+            <div id="category-caixa-branca" class="content-section active">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-[#A5694B]">Técnicas de Teste de Caixa Branca</h2>
+                    <p class="mt-2 text-gray-700 max-w-2xl mx-auto">Também conhecido como Teste Estrutural, é como ser um mecânico que abre o capô do carro para ver o motor. Aqui, o testador conhece o código-fonte do software para verificar a lógica interna, a estrutura e o fluxo de controle.</p>
+                </div>
+                <div id="tech-nav-caixa-branca" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                    <button class="tech-btn p-2 px-4 rounded-full border-2" onclick="showTechnique('caixa-branca', 'cobertura')">Cobertura</button>
+                    <button class="tech-btn p-2 px-4 rounded-full border-2" onclick="showTechnique('caixa-branca', 'caminhos')">Caminhos</button>
+                    <button class="tech-btn p-2 px-4 rounded-full border-2" onclick="showTechnique('caixa-branca', 'comandos')">Comandos</button>
+                    <button class="tech-btn p-2 px-4 rounded-full border-2" onclick="showTechnique('caixa-branca', 'condicoes')">Condições</button>
+                </div>
+                <div id="technique-content-caixa-branca"></div>
+            </div>
+
+            <!-- CAIXA PRETA SECTION -->
+            <div id="category-caixa-preta" class="content-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-[#A5694B]">Técnicas de Teste de Caixa Preta</h2>
+                    <p class="mt-2 text-gray-700 max-w-2xl mx-auto">Também conhecido como Teste Funcional, é como ser um motorista que dirige o carro para ver se ele anda e freia, sem se preocupar com o motor. O foco está em verificar as funcionalidades do software com base nos requisitos.</p>
+                </div>
+                <div id="tech-nav-caixa-preta" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                    <button class="tech-btn p-2 px-4 rounded-full border-2" onclick="showTechnique('caixa-preta', 'cenarios')">Cenários</button>
+                    <button class="tech-btn p-2 px-4 rounded-full border-2" onclick="showTechnique('caixa-preta', 'casos-de-uso')">Casos de Uso</button>
+                    <button class="tech-btn p-2 px-4 rounded-full border-2" onclick="showTechnique('caixa-preta', 'valores-limites')">Valores Limites</button>
+                </div>
+                <div id="technique-content-caixa-preta"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const techniques = {
+            'caixa-branca': {
+                'cobertura': {
+                    title: 'Teste de Cobertura',
+                    definition: 'Garante que <strong>todas as partes do código</strong> (linhas, blocos, decisões) sejam executadas <strong>pelo menos uma vez</strong> durante o teste. Mede o "quanto" do seu código foi testado.',
+                    realWorld: 'Em sistemas de controle de tráfego aéreo, o teste de cobertura é vital para garantir que <strong>nenhuma parte do código que controla o voo fique sem ser verificada</strong>, evitando falhas catastróficas.',
+                    interactiveContent: `
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h4 class="font-bold text-lg mb-2">Pseudocódigo: Cálculo de Desconto</h4>
+                                <div class="code-block">
+                                    <span id="cov-line-1">FUNCAO calcularDesconto(valorCompra, clienteVIP)</span>
+                                    <span id="cov-line-2">    SE clienteVIP É VERDADEIRO ENTAO</span>
+                                    <span id="cov-line-3">        SE valorCompra > 100 ENTAO</span>
+                                    <span id="cov-line-4">            desconto = valorCompra * 0.10</span>
+                                    <span id="cov-line-5">        SENAO</span>
+                                    <span id="cov-line-6">            desconto = valorCompra * 0.05</span>
+                                    <span id="cov-line-7">        FIM SE</span>
+                                    <span id="cov-line-8">    SENAO</span>
+                                    <span id="cov-line-9">        desconto = 0</span>
+                                    <span id="cov-line-10">    FIM SE</span>
+                                    <span id="cov-line-11">    RETORNE desconto</span>
+                                    <span id="cov-line-12">FIM FUNCAO</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-2">Simulador de Testes</h4>
+                                <p class="text-sm mb-4">Clique para executar os casos de teste e veja a cobertura do código aumentar.</p>
+                                <div class="space-y-2">
+                                    <button class="w-full bg-gray-200 text-left p-2 rounded hover:bg-gray-300" onclick="runCoverageTest(1)">Executar Teste 1: clienteVIP=true, valorCompra=150</button>
+                                    <button class="w-full bg-gray-200 text-left p-2 rounded hover:bg-gray-300" onclick="runCoverageTest(2)">Executar Teste 2: clienteVIP=true, valorCompra=50</button>
+                                    <button class="w-full bg-gray-200 text-left p-2 rounded hover:bg-gray-300" onclick="runCoverageTest(3)">Executar Teste 3: clienteVIP=false, valorCompra=200</button>
+                                </div>
+                                <div class="mt-4">
+                                    <h5 class="font-bold">Cobertura do Código:</h5>
+                                    <div class="chart-container relative h-24 max-h-24 w-full max-w-md mx-auto">
+                                        <canvas id="coverageChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                'caminhos': {
+                    title: 'Teste de Caminhos',
+                    definition: 'Foca em testar <strong>TODOS os possíveis caminhos de execução</strong> que o código pode tomar, considerando todas as combinações de decisões lógicas.',
+                    realWorld: 'Um erro em um software bancário que calcula juros compostos poderia ter sido evitado com um teste de caminhos abrangente, identificando sequências de operações onde os juros não eram calculados corretamente.',
+                    interactiveContent: `
+                        <div class="grid md:grid-cols-2 gap-8 items-start">
+                             <div>
+                                <h4 class="font-bold text-lg mb-2">Pseudocódigo: Cálculo de Descontos Complexo</h4>
+                                <div class="code-block" id="path-code">
+                                    <span id="path-line-1">SE cliente é VIP:</span>
+                                    <span id="path-line-2">  SE compras > 1000:</span>
+                                    <span id="path-line-3">    desconto = 20%</span>
+                                    <span id="path-line-4">  SENÃO:</span>
+                                    <span id="path-line-5">    desconto = 10%</span>
+                                    <span id="path-line-6">SENÃO:</span>
+                                    <span id="path-line-7">  SE compras > 500:</span>
+                                    <span id="path-line-8">    desconto = 5%</span>
+                                    <span id="path-line-9">  SENÃO:</span>
+                                    <span id="path-line-10">   desconto = 0%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-2">Simulador de Caminhos</h4>
+                                <div class="space-y-4 p-4 border rounded-lg bg-white shadow-sm">
+                                    <div>
+                                        <label for="path-vip" class="flex items-center cursor-pointer">
+                                            <input type="checkbox" id="path-vip" class="mr-2" onchange="runPathTest()">
+                                            Cliente é VIP?
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label for="path-compras" class="block mb-1">Valor das Compras:</label>
+                                        <input type="number" id="path-compras" value="600" class="w-full p-2 border rounded" oninput="runPathTest()">
+                                    </div>
+                                    <div class="text-center mt-4">
+                                        <p class="text-lg">Desconto Aplicado: <span id="path-result" class="font-bold text-2xl text-[#A5694B]">5%</span></p>
+                                        <p class="text-sm text-gray-600">Caminho Atual: <span id="path-name" class="font-semibold">Não-VIP, Compras > 500</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                'comandos': {
+                    title: 'Teste de Comandos (ou Instruções)',
+                    definition: 'Verifica se <strong>cada instrução ou comando individual</strong> no código é executado corretamente. É o nível mais granular do teste de Caixa Branca.',
+                    realWorld: 'Um erro em um sistema de e-commerce onde o comando para aplicar descontos não funcionava corretamente poderia ter sido detectado testando esse comando isoladamente.',
+                    interactiveContent: `
+                         <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="font-bold text-lg mb-2">Simulador de Inventário</h4>
+                                <div class="space-y-4 p-4 border rounded-lg bg-white shadow-sm">
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <input type="text" id="cmd-item" placeholder="Nome do item" class="p-2 border rounded col-span-2">
+                                        <input type="number" id="cmd-qty" placeholder="Qtd" class="p-2 border rounded">
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <button class="bg-[#A5694B] text-white p-2 rounded hover:bg-opacity-90" onclick="runCommand('add')">Adicionar</button>
+                                        <button class="bg-[#A5694B] text-white p-2 rounded hover:bg-opacity-90" onclick="runCommand('remove')">Remover</button>
+                                        <button class="bg-[#A5694B] text-white p-2 rounded hover:bg-opacity-90" onclick="runCommand('update')">Atualizar</button>
+                                    </div>
+                                    <div id="cmd-log" class="mt-4 p-2 h-24 bg-gray-100 rounded overflow-y-auto text-sm"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-2">Estado do Estoque</h4>
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th class="border-b-2 p-2">Item</th>
+                                            <th class="border-b-2 p-2 text-right">Quantidade</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cmd-inventory">
+                                        <tr><td colspan="2" class="text-center p-4 text-gray-500">Estoque vazio</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `
+                },
+                'condicoes': {
+                    title: 'Teste de Condições',
+                    definition: 'Valida <strong>todas as condições lógicas</strong> presentes no código (como `if`, `else`). O objetivo é testar cada condição tanto em situações <strong>verdadeiras</strong> quanto <strong>falsas</strong>.',
+                    realWorld: 'Em um sistema de autenticação de um portal online, um teste de condições poderia ter identificado um bug que permitia acesso mesmo quando uma das condições de segurança (ex: senha expirada) falhava.',
+                    interactiveContent: `
+                        <div class="grid md:grid-cols-2 gap-8 items-start">
+                            <div>
+                                <h4 class="font-bold text-lg mb-2">Pseudocódigo: Sistema de Login</h4>
+                                <div class="code-block" id="cond-code">
+                                    <span id="cond-line-1">SE usuarioExiste(usuario) ENTAO</span>
+                                    <span id="cond-line-2">  SE senhaCorreta(usuario, senha) ENTAO</span>
+                                    <span id="cond-line-3">    RETORNE "Login bem-sucedido"</span>
+                                    <span id="cond-line-4">  SENAO</span>
+                                    <span id="cond-line-5">    RETORNE "Senha incorreta"</span>
+                                    <span id="cond-line-6">  FIM SE</span>
+                                    <span id="cond-line-7">SENAO</span>
+                                    <span id="cond-line-8">  RETORNE "Usuário não encontrado"</span>
+                                    <span id="cond-line-9">FIM SE</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-2">Simulador de Login</h4>
+                                <div class="space-y-4 p-4 border rounded-lg bg-white shadow-sm">
+                                    <p class="text-sm text-gray-600">Usuário válido: "aluno", Senha válida: "123"</p>
+                                    <div>
+                                        <label for="cond-user" class="block mb-1">Usuário:</label>
+                                        <input type="text" id="cond-user" class="w-full p-2 border rounded">
+                                    </div>
+                                    <div>
+                                        <label for="cond-pass" class="block mb-1">Senha:</label>
+                                        <input type="password" id="cond-pass" class="w-full p-2 border rounded">
+                                    </div>
+                                    <button class="w-full bg-[#A5694B] text-white p-2 rounded hover:bg-opacity-90" onclick="runConditionTest()">Testar Login</button>
+                                    <div class="text-center mt-4">
+                                        <p class="text-lg">Resultado: <span id="cond-result" class="font-bold">Aguardando teste...</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                }
+            },
+            'caixa-preta': {
+                'cenarios': {
+                    title: 'Teste Baseado em Cenários',
+                    definition: 'Cria <strong>cenários realistas de uso do sistema</strong> para verificar se o software se comporta conforme o esperado em situações do dia a dia.',
+                    realWorld: 'Um sistema de reservas de voo teve problemas ao processar reservas múltiplas para o mesmo assento. Isso poderia ter sido evitado com testes baseados em cenários complexos que simulassem múltiplos usuários tentando reservar o mesmo voo simultaneamente.',
+                    interactiveContent: `
+                        <div class="space-y-4">
+                            <h4 class="font-bold text-lg mb-2 text-center">Simulador de Cenários: Reserva de Hotel</h4>
+                            
+                            <div class="border rounded-lg bg-white shadow-sm">
+                                <button class="w-full text-left p-4 font-bold flex justify-between items-center" onclick="toggleAccordion(this)">
+                                    <span>Cenário 1: Reserva Simples</span>
+                                    <span>&#9660;</span>
+                                </button>
+                                <div class="accordion-content px-4 pb-4">
+                                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                                        <li>Usuário busca por hotel em São Paulo, datas de 10 a 12 de agosto.</li>
+                                        <li>Seleciona um hotel e um tipo de quarto.</li>
+                                        <li>Preenche os dados do hóspede e pagamento com cartão válido.</li>
+                                        <li>Recebe a confirmação da reserva por e-mail.</li>
+                                        <li class="font-bold mt-2">Resultado Esperado: Reserva confirmada, e-mail recebido, quarto bloqueado.</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-lg bg-white shadow-sm">
+                                <button class="w-full text-left p-4 font-bold flex justify-between items-center" onclick="toggleAccordion(this)">
+                                    <span>Cenário 2: Cancelamento de Reserva</span>
+                                    <span>&#9660;</span>
+                                </button>
+                                <div class="accordion-content px-4 pb-4">
+                                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                                        <li>Usuário faz login e acessa "Minhas Reservas".</li>
+                                        <li>Seleciona uma reserva ativa e clica em "Cancelar".</li>
+                                        <li>Confirma o cancelamento.</li>
+                                        <li class="font-bold mt-2">Resultado Esperado: Reserva marcada como cancelada, e-mail de cancelamento recebido, quarto liberado.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                'casos-de-uso': {
+                    title: 'Teste Baseado em Casos de Uso',
+                    definition: 'Cria testes baseados em <strong>Casos de Uso</strong>, que são descrições detalhadas de <strong>interações típicas entre o usuário e o sistema</strong> para atingir um objetivo específico.',
+                    realWorld: 'Em sistemas de caixas eletrônicos, testes baseados em casos de uso são essenciais para validar transações como saques e depósitos, prevenindo problemas como a dedução incorreta de saldo.',
+                    interactiveContent: `
+                        <div class="space-y-4">
+                            <h4 class="font-bold text-lg mb-2 text-center">Caso de Uso: Transferência Bancária</h4>
+                            
+                            <div class="border rounded-lg bg-white shadow-sm">
+                                <button class="w-full text-left p-4 font-bold flex justify-between items-center" onclick="toggleAccordion(this)">
+                                    <span>Fluxo Principal (Caminho Feliz)</span>
+                                    <span>&#9660;</span>
+                                </button>
+                                <div class="accordion-content px-4 pb-4">
+                                    <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                                        <li>Cliente faz login no aplicativo.</li>
+                                        <li>Seleciona a opção "Transferência".</li>
+                                        <li>Informa os dados da conta de destino e o valor.</li>
+                                        <li>Confirma os dados e digita a senha de segurança.</li>
+                                        <li class="font-bold mt-2">Resultado Esperado: Sistema exibe mensagem de sucesso e comprovante.</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-lg bg-white shadow-sm">
+                                <button class="w-full text-left p-4 font-bold flex justify-between items-center" onclick="toggleAccordion(this)">
+                                    <span>Fluxos Alternativos / Exceções</span>
+                                    <span>&#9660;</span>
+                                </button>
+                                <div class="accordion-content px-4 pb-4">
+                                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                        <li><b>Teste de Saldo Insuficiente:</b> Tentar transferir um valor maior que o saldo em conta. <span class="font-semibold text-red-600">Resultado Esperado: Mensagem de erro "Saldo insuficiente".</span></li>
+                                        <li><b>Teste de Conta Inexistente:</b> Tentar transferir para uma conta de destino inválida. <span class="font-semibold text-red-600">Resultado Esperado: Mensagem de erro "Conta de destino inválida".</span></li>
+                                        <li><b>Teste de Senha Incorreta:</b> Errar a senha de segurança na confirmação. <span class="font-semibold text-red-600">Resultado Esperado: Mensagem de erro "Senha incorreta".</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                'valores-limites': {
+                    title: 'Análise de Valores Limites',
+                    definition: 'Testa as <strong>fronteiras (limites) das entradas de dados permitidas</strong>, garantindo que o software funcione corretamente nas extremidades e lide bem com valores fora dessas faixas.',
+                    realWorld: 'Um erro em um sistema de seguros de vida que aceitou idades fora do limite permitido levou à revisão de várias apólices, algo que poderia ter sido evitado com esta técnica.',
+                    interactiveContent: `
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="p-4 border rounded-lg bg-white shadow-sm">
+                                <h4 class="font-bold text-lg mb-2">Simulador de Inscrição</h4>
+                                <p class="text-sm text-gray-600 mb-4">O sistema aceita idades entre 18 e 65 anos.</p>
+                                <div>
+                                    <label for="limit-age" class="block mb-1">Digite uma idade:</label>
+                                    <input type="number" id="limit-age" class="w-full p-2 border rounded" placeholder="Ex: 17, 18, 65, 66">
+                                </div>
+                                <button class="w-full bg-[#A5694B] text-white p-2 rounded mt-4 hover:bg-opacity-90" onclick="runLimitTest()">Verificar Idade</button>
+                                <div class="text-center mt-4">
+                                    <p class="text-lg">Resultado: <span id="limit-result" class="font-bold">Aguardando teste...</span></p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-2">Visualização dos Limites</h4>
+                                <div class="relative p-4">
+                                    <div class="h-2 bg-gray-200 rounded-full">
+                                        <div class="h-2 bg-green-500 rounded-full w-4/6 ml-[16.66%]"></div>
+                                    </div>
+                                    <div class="flex justify-between text-sm mt-1">
+                                        <span>10</span>
+                                        <span class="font-bold">18</span>
+                                        <span class="font-bold">65</span>
+                                        <span>75</span>
+                                    </div>
+                                    <div id="limit-marker" class="absolute bottom-0 w-4 h-4 bg-blue-500 rounded-full border-2 border-white" style="left: 50%; display: none; transform: translateX(-50%);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                }
+            }
+        };
+
+        let coverageChart;
+        let coverageState = { 1: false, 2: false, 3: false };
+
+        function showCategory(category) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`nav-${category}`).classList.add('active');
+
+            document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(`category-${category}`).classList.add('active');
+
+            const firstTechnique = Object.keys(techniques[category])[0];
+            showTechnique(category, firstTechnique);
+        }
+
+        function showTechnique(category, technique) {
+            document.querySelectorAll(`#tech-nav-${category} .tech-btn`).forEach(btn => btn.classList.remove('active'));
+            const activeButton = document.querySelector(`#tech-nav-${category} button[onclick="showTechnique('${category}', '${technique}')"]`);
+            if (activeButton) activeButton.classList.add('active');
+
+            const contentArea = document.getElementById(`technique-content-${category}`);
+            const data = techniques[category][technique];
+
+            contentArea.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200 animate-fade-in">
+                    <h3 class="text-2xl font-bold mb-4 text-center">${data.title}</h3>
+                    <p class="mb-6 text-center max-w-3xl mx-auto">${data.definition}</p>
+                    <div class="mb-6">
+                        <h4 class="font-bold text-xl mb-4 text-center text-[#A5694B]">Vamos Praticar!</h4>
+                        ${data.interactiveContent}
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xl mb-2 text-center text-[#A5694B]">Exemplo do Mundo Real</h4>
+                        <p class="text-center text-gray-600 max-w-3xl mx-auto italic">"${data.realWorld}"</p>
+                    </div>
+                </div>
+            `;
+            
+            // Post-render initializations
+            if (technique === 'cobertura') initCoverageChart();
+            if (technique === 'caminhos') runPathTest();
+            if (technique === 'comandos') initCommandTest();
+        }
+        
+        // --- Cobertura Logic ---
+        function initCoverageChart() {
+            const ctx = document.getElementById('coverageChart').getContext('2d');
+            if (coverageChart) {
+                coverageChart.destroy();
+            }
+            coverageChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Cobertura'],
+                    datasets: [{
+                        label: 'Código Testado',
+                        data: [0],
+                        backgroundColor: ['#4CAF50'],
+                        borderColor: ['#45a049'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) { return value + "%" }
+                            }
+                        },
+                        y: {
+                           display: false
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Cobertura: ${context.raw.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            coverageState = { 1: false, 2: false, 3: false }; // Reset state
+        }
+        
+        function runCoverageTest(testId) {
+            coverageState[testId] = true;
+            document.querySelectorAll('[id^="cov-line-"]').forEach(el => el.classList.remove('highlight'));
+            
+            const linesToHighlight = {
+                1: ['cov-line-1', 'cov-line-2', 'cov-line-3', 'cov-line-4', 'cov-line-7', 'cov-line-11', 'cov-line-12'],
+                2: ['cov-line-1', 'cov-line-2', 'cov-line-3', 'cov-line-5', 'cov-line-6', 'cov-line-7', 'cov-line-11', 'cov-line-12'],
+                3: ['cov-line-1', 'cov-line-2', 'cov-line-8', 'cov-line-9', 'cov-line-10', 'cov-line-11', 'cov-line-12']
+            };
+
+            linesToHighlight[testId].forEach(id => document.getElementById(id)?.classList.add('highlight'));
+
+            const coveredLines = new Set();
+            if (coverageState[1]) linesToHighlight[1].forEach(l => coveredLines.add(l));
+            if (coverageState[2]) linesToHighlight[2].forEach(l => coveredLines.add(l));
+            if (coverageState[3]) linesToHighlight[3].forEach(l => coveredLines.add(l));
+            
+            const totalLines = 12;
+            const coveragePercentage = (coveredLines.size / totalLines) * 100;
+            
+            coverageChart.data.datasets[0].data[0] = coveragePercentage;
+            coverageChart.update();
+        }
+
+        // --- Caminhos Logic ---
+        function runPathTest() {
+            const isVip = document.getElementById('path-vip').checked;
+            const compras = parseFloat(document.getElementById('path-compras').value) || 0;
+            let desconto = 0;
+            let pathName = '';
+            
+            document.querySelectorAll('[id^="path-line-"]').forEach(el => el.classList.remove('highlight'));
+
+            if (isVip) {
+                document.getElementById('path-line-1').classList.add('highlight');
+                if (compras > 1000) {
+                    desconto = 20;
+                    pathName = 'VIP, Compras > 1000';
+                    ['path-line-2', 'path-line-3'].forEach(id => document.getElementById(id).classList.add('highlight'));
+                } else {
+                    desconto = 10;
+                    pathName = 'VIP, Compras <= 1000';
+                    ['path-line-2', 'path-line-4', 'path-line-5'].forEach(id => document.getElementById(id).classList.add('highlight'));
+                }
+            } else {
+                document.getElementById('path-line-6').classList.add('highlight');
+                if (compras > 500) {
+                    desconto = 5;
+                    pathName = 'Não-VIP, Compras > 500';
+                     ['path-line-7', 'path-line-8'].forEach(id => document.getElementById(id).classList.add('highlight'));
+                } else {
+                    desconto = 0;
+                    pathName = 'Não-VIP, Compras <= 500';
+                    ['path-line-7', 'path-line-9', 'path-line-10'].forEach(id => document.getElementById(id).classList.add('highlight'));
+                }
+            }
+            document.getElementById('path-result').textContent = `${desconto}%`;
+            document.getElementById('path-name').textContent = pathName;
+        }
+
+        // --- Comandos Logic ---
+        let inventory = {};
+        function initCommandTest() {
+            inventory = {};
+            updateInventoryDisplay();
+            document.getElementById('cmd-log').innerHTML = '';
+        }
+
+        function runCommand(cmd) {
+            const item = document.getElementById('cmd-item').value.trim();
+            const qty = parseInt(document.getElementById('cmd-qty').value);
+            const log = document.getElementById('cmd-log');
+            
+            if (!item) {
+                log.innerHTML += `<p class="text-red-500">> Erro: Nome do item é obrigatório.</p>`;
+                return;
+            }
+            
+            let logMsg = '';
+
+            switch(cmd) {
+                case 'add':
+                    if (isNaN(qty) || qty <= 0) { logMsg = `<p class="text-red-500">> Erro: Quantidade para adicionar deve ser positiva.</p>`; break; }
+                    inventory[item] = (inventory[item] || 0) + qty;
+                    logMsg = `<p>> ADICIONAR_ITEM("${item}", ${qty})</p>`;
+                    break;
+                case 'remove':
+                    if (isNaN(qty) || qty <= 0) { logMsg = `<p class="text-red-500">> Erro: Quantidade para remover deve ser positiva.</p>`; break; }
+                    if (!inventory[item] || inventory[item] < qty) {
+                        logMsg = `<p class="text-red-500">> Erro: Estoque insuficiente ou item não existe.</p>`;
+                    } else {
+                        inventory[item] -= qty;
+                        if (inventory[item] === 0) delete inventory[item];
+                        logMsg = `<p>> REMOVER_ITEM("${item}", ${qty})</p>`;
+                    }
+                    break;
+                case 'update':
+                    if (isNaN(qty) || qty < 0) { logMsg = `<p class="text-red-500">> Erro: Quantidade para atualizar não pode ser negativa.</p>`; break; }
+                    if (!inventory[item]) {
+                        logMsg = `<p class="text-red-500">> Erro: Não é possível atualizar item inexistente.</p>`;
+                    } else {
+                        inventory[item] = qty;
+                        if (inventory[item] === 0) delete inventory[item];
+                        logMsg = `<p>> ATUALIZAR_ESTOQUE("${item}", ${qty})</p>`;
+                    }
+                    break;
+            }
+            log.innerHTML += logMsg;
+            log.scrollTop = log.scrollHeight;
+            updateInventoryDisplay();
+        }
+
+        function updateInventoryDisplay() {
+            const tbody = document.getElementById('cmd-inventory');
+            tbody.innerHTML = '';
+            if (Object.keys(inventory).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" class="text-center p-4 text-gray-500">Estoque vazio</td></tr>';
+                return;
+            }
+            for (const item in inventory) {
+                const row = `<tr><td class="border-b p-2">${item}</td><td class="border-b p-2 text-right">${inventory[item]}</td></tr>`;
+                tbody.innerHTML += row;
+            }
+        }
+
+        // --- Condições Logic ---
+        function runConditionTest() {
+            const user = document.getElementById('cond-user').value;
+            const pass = document.getElementById('cond-pass').value;
+            const resultEl = document.getElementById('cond-result');
+            let resultText = '';
+
+            document.querySelectorAll('[id^="cond-line-"]').forEach(el => el.classList.remove('highlight'));
+
+            if (user === 'aluno') {
+                document.getElementById('cond-line-1').classList.add('highlight');
+                if (pass === '123') {
+                    resultText = 'Login bem-sucedido';
+                    ['cond-line-2', 'cond-line-3'].forEach(id => document.getElementById(id).classList.add('highlight'));
+                } else {
+                    resultText = 'Senha incorreta';
+                    ['cond-line-2', 'cond-line-4', 'cond-line-5'].forEach(id => document.getElementById(id).classList.add('highlight'));
+                }
+            } else {
+                resultText = 'Usuário não encontrado';
+                 ['cond-line-1', 'cond-line-7', 'cond-line-8'].forEach(id => document.getElementById(id).classList.add('highlight'));
+            }
+            resultEl.textContent = resultText;
+            resultEl.className = resultText === 'Login bem-sucedido' ? 'font-bold text-green-600' : 'font-bold text-red-600';
+        }
+
+        // --- Valores Limites Logic ---
+        function runLimitTest() {
+            const age = parseInt(document.getElementById('limit-age').value);
+            const resultEl = document.getElementById('limit-result');
+            const marker = document.getElementById('limit-marker');
+            let resultText = '';
+            let resultClass = '';
+
+            if (isNaN(age)) {
+                resultText = 'Por favor, insira um número.';
+                resultClass = 'font-bold text-gray-500';
+                marker.style.display = 'none';
+            } else if (age < 18) {
+                resultText = 'Idade mínima é 18 anos.';
+                resultClass = 'font-bold text-red-600';
+            } else if (age > 65) {
+                resultText = 'Idade máxima é 65 anos.';
+                resultClass = 'font-bold text-red-600';
+            } else {
+                resultText = 'Idade aceita.';
+                resultClass = 'font-bold text-green-600';
+            }
+            
+            resultEl.textContent = resultText;
+            resultEl.className = resultClass;
+
+            if (!isNaN(age)) {
+                const minRange = 10;
+                const maxRange = 75;
+                const percentage = ((age - minRange) / (maxRange - minRange)) * 100;
+                marker.style.left = `${Math.max(0, Math.min(100, percentage))}%`;
+                marker.style.display = 'block';
+                marker.style.backgroundColor = (age >= 18 && age <= 65) ? '#22c55e' : '#ef4444';
+            }
+        }
+        
+        // --- Accordion Logic ---
+        function toggleAccordion(button) {
+            const content = button.nextElementSibling;
+            const arrow = button.querySelector('span:last-child');
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                arrow.innerHTML = '&#9660;';
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                arrow.innerHTML = '&#9650;';
+            }
+        }
+
+        // Initial load
+        window.onload = () => {
+            showCategory('caixa-branca');
+        };
+    </script>
+</body>
+</html>
